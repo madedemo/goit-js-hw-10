@@ -75,6 +75,7 @@ function handleResetButtonClick() {
   refs.startBtn.disabled = true; // Делаем кнопку "Start" неактивной
   refs.stopBtn.disabled = true; // Делаем кнопку "Stop" неактивной
   refs.resetBtn.disabled = true; // Делаем кнопку "Reset" неактивной
+  refs.datePicker._flatpickr.clear();
   refs.datePicker.disabled = false; // Включаем поле выбора даты
 }
 

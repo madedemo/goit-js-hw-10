@@ -3,87 +3,110 @@ import 'flatpickr/dist/flatpickr.min.css';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
-// Объявляем объект с ссылками на элементы страницы
 const refs = {
-  datePicker: document.getElementById('datetime-picker'), // Поле для выбора даты
-  startBtn: document.querySelector('[data-start]'), // Кнопка "Старт"
-  days: document.querySelector('[data-days]'), // Поле для отображения дней
-  hours: document.querySelector('[data-hours]'), // Поле для отображения часов
-  minutes: document.querySelector('[data-minutes]'), // Поле для отображения минут
-  seconds: document.querySelector('[data-seconds]'), // Поле для отображения секунд
+  datePicker: document.getElementById('datetime-picker'),
+  startBtn: document.querySelector('[data-start]'),
+  stopBtn: document.querySelector('[data-stop]'),
+  resetBtn: document.querySelector('[data-reset]'),
+  days: document.querySelector('[data-days]'),
+  hours: document.querySelector('[data-hours]'),
+  minutes: document.querySelector('[data-minutes]'),
+  seconds: document.querySelector('[data-seconds]'),
 };
 
-let intervalId = null; // Идентификатор интервала для обновления таймера
+let intervalId = null;
 
-// Делаем кнопку "Старт" неактивной по умолчанию
 refs.startBtn.disabled = true;
+refs.stopBtn.disabled = true;
+refs.resetBtn.disabled = true;
 
-// Настройки для календаря
 const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
-
-  // Обработчик события закрытия календаря
   onClose(selectedDates) {
-    const userSelectedDate = selectedDates[0]; // Выбранная пользователем дата
-
-    // Проверяем, выбрана ли дата в будущем
+    const userSelectedDate = selectedDates[0];
     if (userSelectedDate > options.defaultDate) {
-      enableStartButton(); // Активируем кнопку "Старт"
-      startCountdown(userSelectedDate); // Запускаем таймер обратного отсчета
+      enableStartButton();
     } else {
-      showErrorToast('Please choose a date in the future'); // Выводим сообщение об ошибке
+      showErrorToast('Please choose a date in the future');
     }
   },
 };
 
-// Инициализируем календарь
 flatpickr(refs.datePicker, options);
 
-// Функция для активации кнопки "Старт"
 function enableStartButton() {
-  refs.startBtn.disabled = false; // Делаем кнопку активной
-  // Добавляем обработчик события на кнопку "Старт"
+  refs.startBtn.disabled = false;
   refs.startBtn.addEventListener('click', handleStartButtonClick);
 }
 
-// Обработчик события для нажатия на кнопку "Старт"
-function handleStartButtonClick() {
-  startCountdown(refs.datePicker._flatpickr.selectedDates[0]); // Запускаем таймер
-  refs.startBtn.disabled = true; // Делаем кнопку неактивной
-  refs.datePicker.disabled = true; // Делаем поле выбора даты неактивным
+function enableStopButton() {
+  refs.stopBtn.disabled = false;
+  refs.stopBtn.addEventListener('click', handleStopButtonClick);
 }
 
-// Функция для запуска таймера обратного отсчета
+function enableResetButton() {
+  refs.resetBtn.disabled = false;
+  refs.resetBtn.addEventListener('click', handleResetButtonClick);
+}
+
+function handleStartButtonClick() {
+  startCountdown(refs.datePicker._flatpickr.selectedDates[0]);
+  refs.startBtn.disabled = true;
+  refs.datePicker.disabled = true;
+  enableStopButton(); // Активируем кнопку "Stop" при нажатии на "Start"
+  enableResetButton(); // Активируем кнопку "Reset" при нажатии на "Start"
+}
+
+function handleStopButtonClick() {
+  clearInterval(intervalId); // Останавливаем интервал
+  intervalId = null;
+  refs.startBtn.disabled = false; // Включаем кнопку "Start"
+  refs.datePicker.disabled = false; // Включаем поле выбора даты
+  refs.stopBtn.disabled = true; // Делаем кнопку "Stop" неактивной
+}
+
+function handleResetButtonClick() {
+  clearInterval(intervalId); // Останавливаем интервал
+  intervalId = null;
+  resetClock(); // Сбрасываем значения таймера
+  refs.startBtn.disabled = true; // Делаем кнопку "Start" неактивной
+  refs.stopBtn.disabled = true; // Делаем кнопку "Stop" неактивной
+  refs.resetBtn.disabled = true; // Делаем кнопку "Reset" неактивной
+  refs.datePicker.disabled = false; // Включаем поле выбора даты
+}
+
 function startCountdown(targetDate) {
   intervalId = setInterval(() => {
-    const deltaTime = targetDate - Date.now(); // Вычисляем разницу во времени
-    const time = convertMs(deltaTime); // Конвертируем разницу в формат дней, часов, минут и секунд
-    updateClockFace(time); // Обновляем отображение времени на странице
-
-    // Проверяем, закончился ли отсчет времени
+    const deltaTime = targetDate - Date.now();
+    const time = convertMs(deltaTime);
+    updateClockFace(time);
     if (deltaTime < 1000) {
-      clearInterval(intervalId); // Останавливаем таймер
+      clearInterval(intervalId);
     }
   }, 1000);
 }
 
-// Функция для обновления отображения времени на странице
 function updateClockFace({ days, hours, minutes, seconds }) {
-  refs.days.textContent = addLeadingZero(days); // Обновляем количество дней
-  refs.hours.textContent = addLeadingZero(hours); // Обновляем количество часов
-  refs.minutes.textContent = addLeadingZero(minutes); // Обновляем количество минут
-  refs.seconds.textContent = addLeadingZero(seconds); // Обновляем количество секунд
+  refs.days.textContent = addLeadingZero(days);
+  refs.hours.textContent = addLeadingZero(hours);
+  refs.minutes.textContent = addLeadingZero(minutes);
+  refs.seconds.textContent = addLeadingZero(seconds);
 }
 
-// Функция для добавления ведущего нуля к числам, если они меньше 10
+function resetClock() {
+  refs.days.textContent = '00';
+  refs.hours.textContent = '00';
+  refs.minutes.textContent = '00';
+  refs.seconds.textContent = '00';
+}
+
 function addLeadingZero(value) {
   return String(value).padStart(2, '0');
 }
 
-// Функция для конвертации времени в миллисекундах в формат дней, часов, минут и секунд
 function convertMs(ms) {
   const second = 1000;
   const minute = second * 60;
@@ -98,7 +121,6 @@ function convertMs(ms) {
   return { days, hours, minutes, seconds };
 }
 
-// Функция для вывода сообщения об ошибке
 function showErrorToast(message) {
   iziToast.error({
     title: 'Error',
